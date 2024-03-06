@@ -10,4 +10,4 @@ Learning on PBD ch3, ch4
 ch3 is mainly based on motion modeling.
 ch4 in progress
 Play with xpbd code. Some confusion why we need to divide to odd and even. A modified version of just horizontal, vertical and diagonal is uploaded. It seems work.
-![new pic]([https://octodex.github.com/images/bannekat.png](https://github.com/ZYCRC/Simulation-learing/blob/main/Screenshot%20from%202024-03-06%2012-40-08.png)https://github.com/ZYCRC/Simulation-learing/blob/main/Screenshot%20from%202024-03-06%2012-40-08.png)
+![new pic]([https://github.com/ZYCRC/Simulation-learing/blob/main/Screenshot%20from%202024-03-06%2012-40-08.png])

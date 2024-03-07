@@ -9,5 +9,5 @@ Week2 Mar 4th -
 Learning on PBD ch3, ch4
 ch3 is mainly based on motion modeling.
 ch4 in progress
-Play with xpbd code. Some confusion why we need to divide to odd and even. A modified version of just horizontal, vertical and diagonal is uploaded. It seems work.
+Play with xpbd code (https://github.com/TonyZYT2000/PyPBD). Some confusion why we need to divide to odd and even. A modified version of just horizontal, vertical and diagonal is uploaded. It seems work.
 ![image](n=30.png)

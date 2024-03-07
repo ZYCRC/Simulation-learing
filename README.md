@@ -10,4 +10,4 @@ Learning on PBD ch3, ch4
 ch3 is mainly based on motion modeling.
 ch4 in progress
 Play with xpbd code. Some confusion why we need to divide to odd and even. A modified version of just horizontal, vertical and diagonal is uploaded. It seems work.
-![image](newversion.png)
+![image](Screenshot from 2024-03-06 19-17-04.png)

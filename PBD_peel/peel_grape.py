@@ -88,15 +88,14 @@ pl = pv.Plotter()
 pl.add_mesh(mesh, color='#9f5547ff', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
 
 # ellipsoid grape
-grape = pv.read('assets/grape.ply')
-grape.points = grape.points - np.array([0, 0, 1e-4])
-pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='surface')
+# grape = pv.read('assets/grape.ply')
+# grape.points = grape.points - np.array([0, 0, 1e-4])
+# pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='surface')
 
 # grape meat that is green
-grape_meat= pv.read('assets/grape_skin.ply')
-grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
-pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
-
+# grape_meat= pv.read('assets/grape_skin.ply')
+# grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
+# pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
 with torch.no_grad():
     for t in range(1, control_trajectory.shape[0]):
         softbody.grasp_point = control_trajectory[t].clone()
@@ -111,7 +110,7 @@ with torch.no_grad():
                         quasi_static=cfg.quasi_static,
                         plane_height=cfg.ground_plane_height, 
                         use_shape_matching=cfg.use_shape_matching,
-                        use_spring_boundary=cfg.use_spring_boundary)
+                        use_spring_boundary=cfg.use_spring_boundary) #cfg.use_spring_boundary
         V_ref, V_velocity_ref = step_ref.forward(
             softbody.V, softbody.V_velocity)
         softbody.V = V_ref.clone()

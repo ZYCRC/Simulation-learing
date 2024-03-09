@@ -359,6 +359,8 @@ class project_C_spring_boundary(torch.nn.Module):
                 L: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # position difference vectors
         N = V_predict[self.C_dist[:, 0]] - V_predict[self.C_dist[:, 1]]
+        # print('self.C_dist[:, 0]', self.C_dist[:, 0])
+        # print("self.C_dist[:, 1]", self.C_dist[:, 1])
         # distance
         D = torch.norm(N, p=2, dim=1, keepdim=True)
         # constarint values

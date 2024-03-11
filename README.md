@@ -14,3 +14,6 @@ Play with xpbd code (https://github.com/TonyZYT2000/PyPBD). Some confusion why w
 Play with grape peeling code. Grape peeling code doubles the surface for one is the real surface and one is fixed boundary. It will first run the dist constrain to simulate the distance then run bounbdary constrain to drag the vertex back due to boundary constrain. The it will calculate the energy on the boundary. When the energy exceed limit, setting it to a very low level to consider it as broken.  
 ![image](boundary_constrain_high_energy.png)
 ![image](boundary_constrain_low_energy.png)
+Peel something new, build a plane from PV lib and set the grasp point and the control trajectory.
+![image](peel_plane.png)
+![image](peel_plane_animate.png)

@@ -17,3 +17,10 @@ Play with grape peeling code. Grape peeling code doubles the surface for one is 
 Peel something new, build a plane from PV lib and set the grasp point and the control trajectory.
 ![image](peel_plane.png)
 ![image](peel_plane_animate.png)
+
+Week3-4 Mar 27th- April  
+Learning how to use pytorch to optimize control trajectory. Using gradient decsend to optimize trajectory. First pre-define a control trajectory and run the simulation to get target point position. Then reload the model and optimize the trajecotry from initial position.  
+The loss is weird since it will suddenly drop at around 500 iterations and converge quickly but from 1-500 it will stay at nealy same loss. I think it might be trying to break the damage constrain for the 1-500 iterations when the boundary is damaged, it will converge soon.
+![image](simulation.png)  
+![image](test.png)  
+![image](loss.png)  

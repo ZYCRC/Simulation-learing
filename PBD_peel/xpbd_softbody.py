@@ -268,6 +268,37 @@ class XPBDSoftbody:
             self.C_grasp_d_list.append(dist[torch.nonzero(picked)[:, 0].tolist()])
 
         print(f'control point connects to {self.C_grasp_list[0].shape[0]} vertices')
+
+    def init_target_area(self, loc, radius=None, k=None):
+        assert(self.init == True)
+        self.target_point = loc.to(cfg.device)
+        self.target_list = []
+        dist = torch.norm(self.V[:self.V.shape[0]//2] - self.target_point, dim=-1, keepdim=True)
+
+        if k is not None:
+            
+            smallest_k = dist.topk(k, dim=0, largest=False)[1].squeeze()
+            self.target_list.append(smallest_k)
+        else:
+            picked = dist < radius
+            self.target_list.append(torch.nonzero(picked)[:, 0].long())
+
+        print(f'target point connects to {self.target_list[0].shape[0]} vertices')
+
+    def init_control_area(self, loc, radius=None, k=None):
+        assert(self.init == True)
+        self.control_point = loc.to(cfg.device)
+        self.control_list = []
+        dist = torch.norm(self.V[:self.V.shape[0]//2] - self.control_point, dim=-1, keepdim=True)
+
+        if k is not None:
+            smallest_k = dist.topk(k, dim=0, largest=False)[1].squeeze()
+            self.control_list.append(smallest_k)
+        else:
+            picked = dist < radius
+            self.control_list.append(torch.nonzero(picked)[:, 0].long())
+
+        print(f'target point connects to {self.control_list[0].shape[0]} vertices')
         
 
     def init_dist_constraints(self) -> None:

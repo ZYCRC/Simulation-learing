@@ -14,6 +14,7 @@ import config as cfg
 def get_xpbd_grape(path='assets'):
     softbody = XPBDSoftbody()
     mesh = softbody.add_thinshell(pv.read(os.path.join(path, 'grape_skin.ply')), n_surf=cfg.n_surf)
+    # mesh = softbody.add_thinshell(pv.Plane(), n_surf=cfg.n_surf)
     softbody.init_states()
     print(softbody.V.shape)
     softbody.init_spring_boundary()

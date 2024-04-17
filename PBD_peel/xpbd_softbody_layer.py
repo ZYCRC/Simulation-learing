@@ -259,11 +259,11 @@ class project_C_grasp(torch.nn.Module):
                  C_grasp_d: torch.Tensor,
                  grasp_point: torch.Tensor) -> None:
         super(project_C_grasp, self).__init__()
-        self.V_w = V_w
+        self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()
-        self.C_grasp = C_grasp
-        self.C_grasp_d = C_grasp_d
-        self.grasp_point = grasp_point
+        self.C_grasp = C_grasp.detach().clone()
+        self.C_grasp_d = C_grasp_d.detach().clone()
+        self.grasp_point = grasp_point.detach().clone()
     
     def forward(self, V_predict, L):
         # position difference vectors
@@ -301,11 +301,11 @@ class project_C_dist(torch.nn.Module):
                  C_dist: torch.Tensor,
                  C_init_d: torch.Tensor) -> None:
         super(project_C_dist, self).__init__()
-        self.V_w = V_w
+        self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()add_thinshell
-        self.V_compliance = V_compliance
-        self.C_dist = C_dist
-        self.C_init_d = C_init_d
+        self.V_compliance = V_compliance.detach().clone()
+        self.C_dist = C_dist.detach().clone()
+        self.C_init_d = C_init_d.detach().clone()
         
 
     def forward(self,
@@ -348,11 +348,11 @@ class project_C_spring_boundary(torch.nn.Module):
                  C_dist: torch.Tensor,
                  C_init_d: torch.Tensor) -> None:
         super(project_C_spring_boundary, self).__init__()
-        self.V_w = V_w
+        self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()add_thinshell
-        self.V_compliance = V_compliance
-        self.C_dist = C_dist
-        self.C_init_d = C_init_d
+        self.V_compliance = V_compliance.detach().clone()
+        self.C_dist = C_dist.detach().clone()
+        self.C_init_d = C_init_d.detach().clone()
 
     def forward(self,
                 V_predict: torch.Tensor,
@@ -397,7 +397,7 @@ class project_C_shape_simple(torch.nn.Module):
         self.V_mass_no_inf = V_mass_no_inf.detach().clone()
         self.C_shape = C_shape.detach().clone()
         self.C_init_shape = C_init_shape.detach().clone()
-        self.V_compliance = V_compliance
+        self.V_compliance = V_compliance.detach().clone()
         self.NUM_C = self.C_shape.shape[0]
         self.NUM_particles = self.C_shape.shape[1]
 

@@ -15,14 +15,10 @@ from xpbd_softbody import XPBDSoftbody
 mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
-control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
-                               [0.000186, 0.008863, 0.002481],
-                               [0.000208, 0.00664, 0.003521],
-                               [0.000197, 0.004594, 0.004361],
-                               [0.000208, 0.002349, 0.005903],
-                               [0.000197, -0.00004, 0.006602],
-                               [0.000208, -0.00204, 0.007502],
-                               [0.000208, -0.00404, 0.008502]])
+control_trajectory = np.array([[0.5, 0.5, -0.],
+                               [0.4, 0.4, 0.1],
+                               [0.3, 0.3, 0.3],
+                               [0.2, 0.2, 0.5]])
 
 # interpolate trajectory
 x = np.arange(control_trajectory.shape[0])
@@ -38,7 +34,7 @@ plt.show()
 
 
 control_trajectory = torch.from_numpy(control_trajectory).to(cfg.device)
-softbody.init_grasp_constraints(loc=deepcopy(control_trajectory[0]), radius=1e-3)
+softbody.init_grasp_constraints(loc=deepcopy(control_trajectory[0]), radius=1e-1)
 
 
 cloth_dist_stiffness = 1
@@ -53,8 +49,6 @@ def get_energy_boundary(softbody: XPBDSoftbody,
     
     V_boundary_stiffness_threshold = V_boundary_stiffness.clone()
     V_boundary_stiffness_threshold[V_boundary_stiffness_threshold < 1e-3] = 0
-    # V_boundary_stiffness_threshold = V_boundary_stiffness_threshold * torch.sigmoid(V_boundary_stiffness_threshold - 1e-3)
-
 
     dist_C, dist_C_stiffness = __get_spring_boundary_constraints(softbody,
                                                       V_predict,
@@ -89,15 +83,15 @@ pl = pv.Plotter()
 # skin being peeled
 pl.add_mesh(mesh, color='#9f5547ff', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
 
-# ellipsoid grape
-grape = pv.read('assets/grape.ply')
-grape.points = grape.points - np.array([0, 0, 1e-4])
-pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='surface')
+# # ellipsoid grape
+# grape = pv.read('assets/grape.ply')
+# grape.points = grape.points - np.array([0, 0, 1e-4])
+# pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='surface')
 
-# grape meat that is green
-grape_meat= pv.read('assets/grape_skin.ply')
-grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
-pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
+# # grape meat that is green
+# grape_meat= pv.read('assets/grape_skin.ply')
+# grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
+# pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
 with torch.no_grad():
     for t in range(1, control_trajectory.shape[0]):
         softbody.grasp_point = control_trajectory[t].clone()
@@ -113,14 +107,14 @@ with torch.no_grad():
                         plane_height=cfg.ground_plane_height, 
                         use_shape_matching=cfg.use_shape_matching,
                         use_spring_boundary=cfg.use_spring_boundary) #cfg.use_spring_boundary
-        V_ref, V_velocity_ref = step_ref.forward(softbody.V, softbody.V_velocity)
+        V_ref, V_velocity_ref = step_ref.forward(
+            softbody.V, softbody.V_velocity)
         softbody.V = V_ref.clone()
         softbody.V_velocity = V_velocity_ref.clone()
 
         energy = get_energy_boundary(softbody, softbody.V, V_boundary_stiffness)
-        # print(torch.sigmoid(1e9 * (1e-8 - energy)))
-        # V_boundary_stiffness[:cfg.n_surf][energy.squeeze() > 1e-8] = 1e-5
-        V_boundary_stiffness[:cfg.n_surf] = V_boundary_stiffness[:cfg.n_surf] * torch.sigmoid(1e9 * (1e-8 - energy))
+        
+        V_boundary_stiffness[:cfg.n_surf][energy.squeeze() > 1e-8] = 1e-5
 
         mesh.points = softbody.V.cpu().numpy()
         pl.show(interactive_update=True)

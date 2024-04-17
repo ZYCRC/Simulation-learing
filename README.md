@@ -26,5 +26,7 @@ The loss is weird since it will suddenly drop at around 500 iterations and conve
 Week5- April 16th -  
 Since the simulation trajectory is weird, if we give the peeling a good initialiaztion like 10-20 step from the ground truth trajectory, it might have a better performance.  
 ![image](PBD_peel/20_step_init.png)
-Implement a 3D cubic spline interpolate in pytorch, it support autograd.
+Implement a 3D cubic spline interpolate in pytorch, it support autograd.  
+![image](PBD_peel/spline_test.png)
+![image](PBD_peel/spline_test_loss.png)
 

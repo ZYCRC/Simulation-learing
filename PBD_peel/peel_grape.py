@@ -16,17 +16,13 @@ mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
 control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
-                               [0.000186, 0.008863, 0.002481],
-                               [0.000208, 0.00664, 0.003521],
-                               [0.000197, 0.004594, 0.004361],
-                               [0.000208, 0.002349, 0.005903],
-                               [0.000197, -0.00004, 0.006602],
-                               [0.000208, -0.00204, 0.007502],
-                               [0.000208, -0.00404, 0.008502]])
+                               [ 0.0023,  0.0192, -0.0120],
+                               [ 0.0005,  0.0080,  0.0185],
+                               [-0.0009, -0.0084,  0.0104]])
 
 # interpolate trajectory
 x = np.arange(control_trajectory.shape[0])
-xnew = np.linspace(x.min(), x.max(), control_trajectory.shape[0]*10)  # 10 times denser
+xnew = np.linspace(x.min(), x.max(), 10)  # 10 times denser
 f = interp1d(x, control_trajectory, axis=0, kind='cubic')
 control_trajectory = f(xnew)
 

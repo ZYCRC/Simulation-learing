@@ -29,4 +29,7 @@ Since the simulation trajectory is weird, if we give the peeling a good initiali
 Implement a 3D cubic spline interpolate in pytorch, it support autograd.  
 ![image](PBD_peel/spline_test.png)
 ![image](PBD_peel/spline_test_loss.png)
+Do a simple optimization test. Config: target trajectory 4 control point and 40 interp points. Optimization trajectory 4 control point 10 interp points to save time in every iteration. The optimal result is sensitive to inital point. 
+![image](PBD_peel/fix_startpoint_optimization.png)
+![image](PBD_peel/fix_startpoint_loss.png)
 

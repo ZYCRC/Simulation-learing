@@ -17,8 +17,12 @@ mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
 control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
+                               [0.000186, 0.008863, 0.002481],
+                               [0.000208, 0.00664, 0.003521],
                                [0.000197, 0.004594, 0.004361],
+                               [0.000208, 0.002349, 0.005903],
                                [0.000197, -0.00004, 0.006602],
+                               [0.000208, -0.00204, 0.007502],
                                [0.000208, -0.00404, 0.008502]])
 
 # set control point and target point
@@ -129,9 +133,11 @@ with torch.no_grad():
 
 # set target
 target_pos = softbody.V[control_point].clone()
+
 # reload model
 mesh, softbody = data.get_xpbd_grape()
 softbody.fix_point(0, control_point)
+
 V_origin = softbody.V.clone()
 Velocity_origin = softbody.V_velocity.clone()
 # Hardcoded control trajectory
@@ -144,22 +150,23 @@ def loss_fn(target, predict):
     return torch.norm(target - predict)
 # init spline parameter
 u = torch.linspace(0, 1, 4).to(cfg.device)
-us = torch.linspace(0, 1, 10).to(cfg.device)
+us = torch.linspace(0, 1, 40).to(cfg.device)
 start_point = np.array([[0.000224, 0.010794, -0.001233]])
 start_point = torch.from_numpy(start_point).to(cfg.device)
 spline_control = np.array([ [0.00023, 0.011, -0.001],
                             [0.00024, 0.012, 0.],
                             [0.00025, 0.013, 0.001]])
 spline_control = torch.from_numpy(spline_control).to(cfg.device)
-spline_control.requires_grad_(True)
+spline_control = spline_control.requires_grad_(True)
 # select optimizer
 optimizer = torch.optim.Adam([spline_control], lr=0.001)
 
 # start optimization
 control = []
 loss_list = []
+spline_list = []
 pre_loss = 100
-for t in range(100):
+for t in range(1000):
     print(t)
     x_con = torch.cat((start_point[:, 0], spline_control[:, 0]))
     y_con = torch.cat((start_point[:, 1], spline_control[:, 1]))
@@ -167,10 +174,17 @@ for t in range(100):
     spline_x = interp(u, x_con, us)
     spline_y = interp(u, y_con, us)
     spline_z = interp(u, z_con, us)
-    spline_trajectory = torch.transpose(torch.vstack((spline_x, spline_y, spline_z)), 0, 1)
 
+    spline_trajectory = torch.transpose(torch.vstack((spline_x, spline_y, spline_z)), 0, 1)
+    spline_list.append(spline_trajectory.detach().cpu().numpy())
+    # reset for each test
     softbody.V = V_origin.clone()
     softbody.V_velocity = Velocity_origin.clone()
+
+    cloth_dist_stiffness = 1
+    V_boundary_stiffness = 0.1
+    V_dist_stiffness = torch.ones_like(softbody.V_mass).to(cfg.device)
+    V_boundary_stiffness = torch.ones_like(softbody.V_mass).to(cfg.device) * V_boundary_stiffness
     
     for i in range(spline_trajectory.shape[0]):
         softbody.V[control_point] = spline_trajectory[i]
@@ -192,19 +206,16 @@ for t in range(100):
         V_boundary_stiffness[:cfg.n_surf] = V_boundary_stiffness[:cfg.n_surf] * torch.sigmoid(1e9 * (1e-8 - energy))
 
     # interpolate trajectory
-    control = np.array(control)
-    mesh.points = softbody.V.detach().cpu().numpy()
-    x = np.arange(control_trajectory.shape[0])
-    xnew = np.linspace(x.min(), x.max(), control_trajectory.shape[0]*10)  # 10 times denser
     
     loss = loss_fn(target_pos, V_ref[target_point])
     loss.backward()
     
-    optimizer.step()
-    optimizer.zero_grad()
     loss_list.append(loss.detach().cpu())
+    print(loss)
     if loss.detach() < 0.001:
         break
+    optimizer.step()
+    optimizer.zero_grad()
 
 # interpolate trajectory
 control = np.array(control)

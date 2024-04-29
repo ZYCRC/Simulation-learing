@@ -32,4 +32,6 @@ Implement a 3D cubic spline interpolate in pytorch, it support autograd.
 Do a simple optimization test. Config: target trajectory 4 control point and 40 interp points. Optimization trajectory 4 control point 10 interp points to save time in every iteration. The optimal result is sensitive to inital point. 
 ![image](PBD_peel/fix_startpoint_optimization.png)
 ![image](PBD_peel/fix_startpoint_loss.png)
+Add pv plot for the result
+![image](PBD_peel/pv_view.png)
 

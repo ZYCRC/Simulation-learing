@@ -132,7 +132,7 @@ with torch.no_grad():
 #################################### optimization ###################################
 
 # set target
-target_pos = softbody.V[control_point].clone()
+target_pos = softbody.V[target_point].clone()
 
 # reload model
 mesh, softbody = data.get_xpbd_grape()

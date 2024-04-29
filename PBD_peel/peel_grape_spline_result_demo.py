@@ -20,16 +20,12 @@ u = torch.linspace(0, 1, 4).to(cfg.device)
 us = torch.linspace(0, 1, 40).to(cfg.device)
 start_point = np.array([[0.000224, 0.010794, -0.001233]])
 start_point = torch.from_numpy(start_point).to(cfg.device)
-spline_control = np.array([[ 0.0001,  0.0069,  0.0088],
-                           [ 0.0036,  0.0104,  0.0012],
-                           [-0.0003, -0.0052,  0.0088]])
-# spline_control = np.array([    [0.000186, 0.008863, 0.002481],
-#                                [0.000208, 0.00664, 0.003521],
-#                                [0.000197, 0.004594, 0.004361],
-#                                [0.000208, 0.002349, 0.005903],
-#                                [0.000197, -0.00004, 0.006602],
-#                                [0.000208, -0.00204, 0.007502],
-#                                [0.000208, -0.00404, 0.008502]])
+# spline_control = np.array([[ 0.0011,  0.0059,  0.0016],
+#         [-0.0009,  0.0153, -0.0007],
+#         [ 0.0003, -0.0048,  0.0089]])
+spline_control = np.array([[-2.0959e-03,  1.4323e-02,  8.2421e-03],
+        [ 2.5324e-03,  7.1984e-03,  4.1915e-03],
+        [ 1.6047e-05, -4.3786e-03,  9.0813e-03]])
 
 spline_control = torch.from_numpy(spline_control).to(cfg.device)
 x_con = torch.cat((start_point[:, 0], spline_control[:, 0]))
@@ -112,6 +108,8 @@ pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='su
 grape_meat= pv.read('assets/grape_skin.ply')
 grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
 pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
+
+
 with torch.no_grad():
     for t in range(1, control_trajectory.shape[0]):
         softbody.V[control_point] = control_trajectory[t]

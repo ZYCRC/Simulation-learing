@@ -15,13 +15,21 @@ from xpbd_softbody import XPBDSoftbody
 mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
+# control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
+#                                [0.000186, 0.008863, 0.002481],
+#                                [0.000208, 0.00664, 0.003481],
+#                                [0.000197, 0.004594, 0.003481],
+#                                [0.000208, 0.002349, 0.003481],
+#                                [0.000197, -0.00004, 0.003481],
+#                                [0.000208, -0.00204, 0.003481],
+#                                [0.000208, -0.00404, 0.008502]])
 control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
-                               [0.000186, 0.008863, 0.002481],
-                               [0.000208, 0.00664, 0.003521],
-                               [0.000197, 0.004594, 0.004361],
-                               [0.000208, 0.002349, 0.005903],
-                               [0.000197, -0.00004, 0.006602],
-                               [0.000208, -0.00204, 0.007502],
+                               [0.000224, 0.010794, 0.000233],
+                               [0.000224, 0.010794, 0.001233],
+                               [0.000224, 0.010794, 0.002233],
+                               [0.000224, 0.010794, 0.003233],
+                               [0.000224, 0.010794, 0.004233],
+                               [0.000224, 0.010794, 0.005233],
                                [0.000208, -0.00404, 0.008502]])
 
 # interpolate trajectory
@@ -98,7 +106,7 @@ pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='su
 grape_meat= pv.read('assets/grape_skin.ply')
 grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
 pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
-pl.open_gif('energy.gif')
+pl.open_gif('energy_direct.gif')
 with torch.no_grad():
     for t in range(1, control_trajectory.shape[0]):
         softbody.grasp_point = control_trajectory[t].clone()
@@ -127,5 +135,6 @@ with torch.no_grad():
         mesh.points = softbody.V.cpu().numpy()[:600]
         mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
         pl.show(interactive_update=True)
+        print(np.sum(color))
         pl.write_frame()
 pl.close()

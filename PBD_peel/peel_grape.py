@@ -16,13 +16,17 @@ mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
 control_trajectory = np.array([[0.000224, 0.010794, -0.001233],
-                               [ 0.0023,  0.0192, -0.0120],
-                               [ 0.0005,  0.0080,  0.0185],
-                               [-0.0009, -0.0084,  0.0104]])
+                               [0.000186, 0.008863, 0.002481],
+                               [0.000208, 0.00664, 0.003521],
+                               [0.000197, 0.004594, 0.004361],
+                               [0.000208, 0.002349, 0.005903],
+                               [0.000197, -0.00004, 0.006602],
+                               [0.000208, -0.00204, 0.007502],
+                               [0.000208, -0.00404, 0.008502]])
 
 # interpolate trajectory
 x = np.arange(control_trajectory.shape[0])
-xnew = np.linspace(x.min(), x.max(), 10)  # 10 times denser
+xnew = np.linspace(x.min(), x.max(), 10 * control_trajectory.shape[0])  # 10 times denser
 f = interp1d(x, control_trajectory, axis=0, kind='cubic')
 control_trajectory = f(xnew)
 
@@ -83,7 +87,7 @@ pv.set_plot_theme('document')
 pl = pv.Plotter()
 
 # skin being peeled
-pl.add_mesh(mesh, color='#9f5547ff', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
+mesh_actor = pl.add_mesh(mesh, color='#9f5547ff', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
 
 # ellipsoid grape
 grape = pv.read('assets/grape.ply')
@@ -94,6 +98,7 @@ pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='su
 grape_meat= pv.read('assets/grape_skin.ply')
 grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
 pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
+pl.open_gif('energy.gif')
 with torch.no_grad():
     for t in range(1, control_trajectory.shape[0]):
         softbody.grasp_point = control_trajectory[t].clone()
@@ -117,6 +122,10 @@ with torch.no_grad():
         # print(torch.sigmoid(1e9 * (1e-8 - energy)))
         # V_boundary_stiffness[:cfg.n_surf][energy.squeeze() > 1e-8] = 1e-5
         V_boundary_stiffness[:cfg.n_surf] = V_boundary_stiffness[:cfg.n_surf] * torch.sigmoid(1e9 * (1e-8 - energy))
-
-        mesh.points = softbody.V.cpu().numpy()
+        color = energy.squeeze().cpu().numpy()
+        pl.remove_actor(mesh_actor)
+        mesh.points = softbody.V.cpu().numpy()[:600]
+        mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
         pl.show(interactive_update=True)
+        pl.write_frame()
+pl.close()

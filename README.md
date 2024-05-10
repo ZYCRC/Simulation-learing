@@ -23,7 +23,7 @@ The loss is weird since it will suddenly drop at around 500 iterations and conve
 ![image](test.png)  
 ![image](loss.png)  
 
-Week5- April 16th -  
+Week5- April 16th -  April 30th
 Since the simulation trajectory is weird, if we give the peeling a good initialiaztion like 10-20 step from the ground truth trajectory, it might have a better performance.  
 ![image](PBD_peel/20_step_init.png)
 Implement a 3D cubic spline interpolate in pytorch, it support autograd.  
@@ -35,3 +35,6 @@ Do a simple optimization test. Config: target trajectory 4 control point and 40 
 Add pv plot for the result
 ![image](PBD_peel/pv_view.png)
 
+Week6 May 1st -  
+Try to optimize the boundary energy while peeling the grape. First visulize the energy in peeling.  
+![image][PBD_peel/energy.gif]

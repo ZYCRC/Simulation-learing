@@ -37,4 +37,4 @@ Add pv plot for the result
 
 Week6 May 1st -  
 Try to optimize the boundary energy while peeling the grape. First visulize the energy in peeling.  
-![image][PBD_peel/energy.gif]
+![][https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/energy.gif]

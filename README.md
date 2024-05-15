@@ -38,3 +38,7 @@ Add pv plot for the result
 Week6 May 1st -  
 Try to optimize the boundary energy while peeling the grape. First visulize the energy in peeling.  
 ![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/energy.gif)
+![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/energy_direct.gif)
+This two are two ways of peeling, the first one is trying to peel from the tangent line of the surface and the other is peeling directly.
+![image](PBD_peel/boundary_energy_per_iter.png)
+![image](PBD_peel/total_number_tenseboundary_per_iter.png)

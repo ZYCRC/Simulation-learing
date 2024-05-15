@@ -16,16 +16,15 @@ from cubic_spline import *
 mesh, softbody = data.get_xpbd_grape()
 
 # Hardcoded control trajectory
-u = torch.linspace(0, 1, 4).to(cfg.device)
-us = torch.linspace(0, 1, 40).to(cfg.device)
+u = torch.linspace(0, 1, 3).to(cfg.device)
+us = torch.linspace(0, 1, 50).to(cfg.device)
 start_point = np.array([[0.000224, 0.010794, -0.001233]])
 start_point = torch.from_numpy(start_point).to(cfg.device)
 # spline_control = np.array([[ 0.0011,  0.0059,  0.0016],
 #         [-0.0009,  0.0153, -0.0007],
 #         [ 0.0003, -0.0048,  0.0089]])
-spline_control = np.array([[-2.0959e-03,  1.4323e-02,  8.2421e-03],
-        [ 2.5324e-03,  7.1984e-03,  4.1915e-03],
-        [ 1.6047e-05, -4.3786e-03,  9.0813e-03]])
+spline_control = np.array([[-0.0005,  0.0116, -0.0017],
+        [-0.0003, -0.0051,  0.0076]])
 
 spline_control = torch.from_numpy(spline_control).to(cfg.device)
 x_con = torch.cat((start_point[:, 0], spline_control[:, 0]))

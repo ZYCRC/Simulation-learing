@@ -45,4 +45,7 @@ This two are two ways of peeling, the first one is trying to peel from the tange
 Use the boundary as the optimize goal, but I think due to sigmod function, the boudary stiffness is not strictly same. That might be a reason of why loss is not dropping fast as the postion based optimization. This is just a primary version of boundary base optimization. Later will try to add energy and area optimize.  
 ![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_based_optimize.gif)
 ![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_based_optimize_tilted1.gif)
-![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_based_optimize_tilted2.gif)
+![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_based_optimize_tilted2.gif)  
+The result of boundary and energy optimize is not very good.
+![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_energy_based_optimize.gif)  
+Primary guess is that it will show a not moving in the start and suddenly active in the later part of simulation. Since the energy we account is sum of per iteration, since the inactive iteration is more and the breaking condition is fixed, the total energy will reduce.

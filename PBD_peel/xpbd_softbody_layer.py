@@ -50,21 +50,21 @@ class XPBDStep(torch.nn.Module):
         self.using_functorch = using_functorch
 
         # distance constraints
-        V_dist_compliance = 1 / (V_dist_stiffness * (dt / substep)**2)
-        for C_dist, C_init_d in zip(softbody.C_dist_list, softbody.C_init_d_list):
-            self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
-            self.project_list.append(project_C_dist(
-                softbody.V_w, V_dist_compliance, C_dist, C_init_d
-            ))
+        # V_dist_compliance = 1 / (V_dist_stiffness * (dt / substep)**2)
+        # for C_dist, C_init_d in zip(softbody.C_dist_list, softbody.C_init_d_list):
+        #     self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
+        #     self.project_list.append(project_C_dist(
+        #         softbody.V_w, V_dist_compliance, C_dist, C_init_d
+        #     ))
 
         # shape matching constraints
-        # if use_shape_matching:
-        #     V_shape_compliance = 1 / (V_shape_stiffness * (dt / substep)**2)
+        if use_shape_matching:
+            V_shape_compliance = 1 / (V_shape_stiffness * (dt / substep)**2)
 
-        #     for C_shape, C_init_shape in zip(softbody.C_shape_list, softbody.C_init_shape_list):
-        #         self.L_list.append(torch.zeros_like(C_init_shape).to(cfg.device))
-        #         self.project_list.append(project_C_shape_simple(
-        #             softbody.V_w, softbody.V_mass_no_inf, C_shape, C_init_shape, V_shape_compliance))
+            for C_shape, C_init_shape in zip(softbody.C_shape_list, softbody.C_init_shape_list):
+                self.L_list.append(torch.zeros_like(C_init_shape).to(cfg.device))
+                self.project_list.append(project_C_shape_simple(
+                    softbody.V_w, softbody.V_mass_no_inf, C_shape, C_init_shape, V_shape_compliance))
         
         if use_spring_boundary:
             self.V_boundary_stiffness = V_boundary_stiffness
@@ -408,7 +408,7 @@ class project_C_shape_simple(torch.nn.Module):
         v_pred = V_predict[self.C_shape].double()
         v_mass = self.V_mass_no_inf[self.C_shape].double()
         local_vec_init = self.C_init_shape.double()
-
+        # print(self.C_init_shape)
         self.v_mass = v_mass
         self.local_vec_init = local_vec_init
 
@@ -443,7 +443,8 @@ class project_C_shape_simple(torch.nn.Module):
         # local vectors from COM to each points
         local_vec_pred = x_pos - curr_com.unsqueeze(1)
         wght_mtx = torch.diag_embed(x_mass.squeeze(2))
-
+        print('pred', local_vec_pred)
+        print('init', local_vec_init)
         # S_mtx = torch.matmul(torch.transpose(local_vec_init, 1, 2), torch.matmul(wght_mtx, local_vec_pred))
         S_mtx = (local_vec_init.transpose(1, 2)) @ (wght_mtx @ local_vec_pred)
         # check svd details : https://zhuanlan.zhihu.com/p/459933370
@@ -460,7 +461,6 @@ class project_C_shape_simple(torch.nn.Module):
 
         rot_mtx = torch.matmul(U, U_T)
         delta_x = (rot_mtx @ local_vec_init.transpose(1, 2)).transpose(1, 2) + (-local_vec_pred)
-
         return delta_x
 
 def get_energy_thinshell(softbody: XPBDSoftbody,

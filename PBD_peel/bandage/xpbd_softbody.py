@@ -248,7 +248,6 @@ class XPBDSoftbody:
             # compute initial center of mass
             weighted_pos = torch.mul(self.V_mass[group_idx[0]], self.V[group_idx[0]])
             rest_com = torch.sum(weighted_pos, 0) / torch.sum(self.V_mass[group_idx[0]])
-            print(rest_com)
             rest_local_vect = self.V[group_idx[0]] - rest_com
             self.C_init_shape_list.append(rest_local_vect)
 

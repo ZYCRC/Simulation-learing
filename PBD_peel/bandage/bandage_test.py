@@ -14,12 +14,12 @@ mesh = softbody.add_thinshell(pv.Plane(), n_surf=100)
 softbody.init_states()
 softbody.set_gravity(torch.tensor([0, 0, -9.8]).to(cfg.device))
 softbody.init_dist_constraints()
-softbody.init_grasp_constraints(softbody.V[8], radius=1e-3)
+softbody.init_grasp_constraints(softbody.V[8], 0, 100, radius=1e-3)
 # softbody.fix_point(0, 1)
 # softbody.init_shape_constraints_thinshell()
 
 # %%
-softbody.init_rigid_constraints(softbody.V_list[0], 200, 0.18)
+softbody.init_rigid_constraints(torch.arange(100), 0, 0.18)
 
 # %%
 softbody.C_shape_list

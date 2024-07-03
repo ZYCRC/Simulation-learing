@@ -49,6 +49,9 @@ class XPBDSoftbody:
         self.C_init_boundary_d_list = []
         # rigid shape
         self.rigid_group = []
+        # vitrual boundary
+        self.virtual_V = []
+        self.virtual_V_mass = []
         
 
     @staticmethod
@@ -148,16 +151,45 @@ class XPBDSoftbody:
 
         self.init_x_min, self.init_x_max, self.init_y_min, self.init_y_max = self.V[:, 0].min(), self.V[:, 0].max(), self.V[:, 1].min(), self.V[:, 1].max()
 
-    def init_spring_boundary(self):
+    # simple version
+    # def init_spring_boundary(self):
+    #     '''
+    #     simply double all the data structure
+    #     '''
+    #     assert(self.init == True)
+    #     self.V = torch.cat([self.V, self.V], 0)
+    #     self.V_velocity = torch.cat([self.V_velocity, self.V_velocity], 0)
+    #     self.V_force = torch.cat([self.V_force, self.V_force], 0)
+    #     self.V_mass = torch.cat([self.V_mass, self.V_mass], 0)
+    #     self.V_w = torch.cat([self.V_w, self.V_w], 0)
+
+    # function for add virtual vertex
+    # def add_vitrual_vertex(self, virtual_V, vitrual_V_mass):
+    #     self.virtual_V.append(virtual_V)
+    #     self.virtual_V_mass.append(vitrual_V_mass)
+
+    # new version
+    def init_spring_boundary(self, N_vitrual):
         '''
         simply double all the data structure
         '''
         assert(self.init == True)
-        self.V = torch.cat([self.V, self.V], 0)
-        self.V_velocity = torch.cat([self.V_velocity, self.V_velocity], 0)
-        self.V_force = torch.cat([self.V_force, self.V_force], 0)
-        self.V_mass = torch.cat([self.V_mass, self.V_mass], 0)
-        self.V_w = torch.cat([self.V_w, self.V_w], 0)
+        self.V = torch.cat([self.V, self.V[:N_vitrual]], 0)
+        self.V_velocity = torch.cat([self.V_velocity, self.V_velocity[:N_vitrual]], 0)
+        self.V_force = torch.cat([self.V_force, self.V_force[:N_vitrual]], 0)
+        self.V_mass = torch.cat([self.V_mass, self.V_mass[:N_vitrual]], 0)
+        self.V_mass_no_inf = self.V_mass.clone()
+        self.V_w = torch.cat([self.V_w, self.V_w[:N_vitrual]], 0)
+
+    def double_area(self, target_V_list: torch.tensor):
+        assert(self.init == True)
+        self.V = torch.cat([self.V, self.V[target_V_list]], 0)
+        self.V_velocity = torch.cat([self.V_velocity, self.V_velocity[target_V_list]], 0)
+        self.V_force = torch.cat([self.V_force, self.V_force[target_V_list]], 0)
+        self.V_mass = torch.cat([self.V_mass, self.V_mass[target_V_list]], 0)
+        self.V_w = torch.cat([self.V_w, self.V_w[target_V_list]], 0)
+        self.V_mass_no_inf = self.V_mass.clone()
+        
 
     def set_gravity(self, gravity_acc: torch.Tensor) -> None:
         '''
@@ -177,10 +209,15 @@ class XPBDSoftbody:
         self.V_mass[self.offset_list[idx] + point_idx] = torch.inf
         self.V_w = 1 / self.V_mass
 
-    def fix_virtual_boundary(self) -> None:
+    # def fix_virtual_boundary(self) -> None:
+    #     assert(self.init == True)
+    #     N = self.V.shape[0] // 2
+    #     self.V_mass[N:] = torch.inf
+    #     self.V_w = 1 / self.V_mass
+
+    def fix_virtual_boundary(self, N_virtual) -> None:
         assert(self.init == True)
-        N = self.V.shape[0] // 2
-        self.V_mass[N:] = torch.inf
+        self.V_mass[-N_virtual:] = torch.inf
         self.V_w = 1 / self.V_mass
 
     def fix_larger_than(self, idx: int, value: float, axis: int) -> None:
@@ -231,10 +268,14 @@ class XPBDSoftbody:
                     self.V_mass[self.offset_list[idx] + i] = torch.inf
         self.V_w = 1 / self.V_mass
 
-    def init_rigid_constraints(self, picked_points: torch.tensor, center_size: int, rad: float) -> None:
-        remain_points = picked_points.cpu().numpy()
+    def init_rigid_constraints(self, idx, rad: float) -> None:
+        offset = 0
+        for i in range(idx):
+            offset += self.V_list[i].shape[0]
+        remain_points = self.V_list[idx].clone()
+        remain_points = remain_points.cpu().numpy()
         remain_idx = np.arange(remain_points.shape[0])
-        kd_tree = KDTree(remain_points, leaf_size=30, metric='euclidean')
+        kd_tree = KDTree(remain_points, leaf_size=10, metric='euclidean')
         while remain_idx.shape[0] != 0:
             choosed_idx = np.random.choice(remain_idx, 1)
             group_idx = kd_tree.query_radius(remain_points[choosed_idx], r=rad)
@@ -243,7 +284,7 @@ class XPBDSoftbody:
             for i in group_idx[0]:
                 group_idx_idx = np.where(remain_idx == i)
                 remain_idx = np.delete(remain_idx, group_idx_idx)
-            self.C_shape_list.append(torch.from_numpy(group_idx[0]))
+            self.C_shape_list.append(torch.from_numpy(group_idx[0] + offset))
             
             # compute initial center of mass
             weighted_pos = torch.mul(self.V_mass[group_idx[0]], self.V[group_idx[0]])
@@ -268,18 +309,51 @@ class XPBDSoftbody:
             if torch.norm(self.V_list[idx][i] - point) < threshold:
                 return i
 
-    def init_boundary_constraints(self) -> None:
+    # def init_boundary_constraints(self) -> None:
+    #     assert(self.init == True)
+    #     N = self.V.shape[0] // 2 # N is the number of real particles
+    #     self.C_boundary_list = [torch.stack([torch.tensor([i, i+N]).long().to(cfg.device) for i in range(N)])]
+    #     self.C_init_boundary_d_list = [torch.zeros(N, 1).to(cfg.device)]
+
+    def init_boundary_constraints(self, N_vitrual, N_start) -> None:
         assert(self.init == True)
-        N = self.V.shape[0] // 2 # N is the number of real particles
-        self.C_boundary_list = [torch.stack([torch.tensor([i, i+N]).long().to(cfg.device) for i in range(N)])]
+        N = N_vitrual # N is the number of real particles
+        self.C_boundary_list = [torch.stack([torch.tensor([i, i+N_start]).long().to(cfg.device) for i in range(N)])]
         self.C_init_boundary_d_list = [torch.zeros(N, 1).to(cfg.device)]
-        
+
+    def add_boundary_constraints(self, object_V_list, boundar_V_list) -> None:
+        assert(self.init == True)
+        N = len(object_V_list)
+        self.C_boundary_list.append(torch.stack([torch.tensor([object_V_list[i], boundar_V_list[i]]).long().to(cfg.device) for i in range(N)]))
+        self.C_init_boundary_d_list.append(torch.zeros(N, 1).to(cfg.device))
+        # for i in range(len(object_V_list)):
+        #     self.C_boundary_list[0] = torch.vstack([self.C_boundary_list[0], torch.stack([object_V_list[i], boundar_V_list[i]])])
+        #     # self.C_boundary_list.append(torch.stack([object_V_list[i], boundar_V_list[i]]))
+        #     self.C_init_boundary_d_list[0] = torch.vstack([self.C_init_boundary_d_list[0], torch.zeros(1)]) 
     
-    def init_grasp_constraints(self, loc, radius=None, k=None):
+    # def init_grasp_constraints(self, loc, radius=None, k=None):
+    #     assert(self.init == True)
+    #     self.grasp_point = loc.to(cfg.device)
+    #     self.C_grasp_list, self.C_grasp_d_list = [], []
+    #     dist = torch.norm(self.V[:self.V.shape[0]//2] - self.grasp_point, dim=-1, keepdim=True)
+
+    #     if k is not None:
+            
+    #         smallest_k = dist.topk(k, dim=0, largest=False)[1].squeeze()
+    #         self.C_grasp_list.append(smallest_k)
+    #         self.C_grasp_d_list.append(dist[smallest_k])
+    #     else:
+    #         picked = dist < radius
+    #         self.C_grasp_list.append(torch.nonzero(picked)[:, 0].long())
+    #         self.C_grasp_d_list.append(dist[torch.nonzero(picked)[:, 0].tolist()])
+
+    #     print(f'control point connects to {self.C_grasp_list[0].shape[0]} vertices')
+
+    def init_grasp_constraints(self, loc, N_start, N_end, radius=None, k=None):
         assert(self.init == True)
         self.grasp_point = loc.to(cfg.device)
         self.C_grasp_list, self.C_grasp_d_list = [], []
-        dist = torch.norm(self.V[:self.V.shape[0]//2] - self.grasp_point, dim=-1, keepdim=True)
+        dist = torch.norm(self.V[torch.arange(N_start, N_end)] - self.grasp_point, dim=-1, keepdim=True)
 
         if k is not None:
             
@@ -288,7 +362,8 @@ class XPBDSoftbody:
             self.C_grasp_d_list.append(dist[smallest_k])
         else:
             picked = dist < radius
-            self.C_grasp_list.append(torch.nonzero(picked)[:, 0].long())
+            # print(picked)
+            self.C_grasp_list.append(torch.nonzero(picked)[:, 0].long() + N_start)
             self.C_grasp_d_list.append(dist[torch.nonzero(picked)[:, 0].tolist()])
 
         print(f'control point connects to {self.C_grasp_list[0].shape[0]} vertices')
@@ -334,6 +409,7 @@ class XPBDSoftbody:
         assert(self.init == True)
         # distance constraints independent set
         C_set_list = []
+        print('detect', len(self.T_list), 'object')
         for Tidx in range(len(self.T_list)):
             # tet distance constraint
             if self.T_list[Tidx] is not None:
@@ -416,14 +492,15 @@ class XPBDSoftbody:
         for key in self.E_dict.keys():
             self.E_dict[key] = list(set(self.E_dict[key]))
 
-    def init_shape_constraints_thinshell(self) -> None:
+    def init_shape_constraints_thinshell(self, idx) -> None:
         '''
         Initializes shape matching constraints
         '''
         assert (self.init == True)
         # volume constraints independent set
         C_set_list = []
-        for Tidx in range(len(self.T_list)):
+        # for Tidx in range(len(self.T_list)):
+        for Tidx in idx:
             if self.T_list[Tidx] is not None and self.T_list[Tidx].shape[1] == 3:
                 # volume constraint for each tet
                 for face in self.T_list[Tidx]:
@@ -492,5 +569,30 @@ class XPBDSoftbody:
         grid = ndimage.gaussian_filter(grid, sigma=(7, 7, 0), order=0)
         self.contact_field = torch.from_numpy(grid).squeeze().float().to(cfg.device)
         
-    
-        
+    def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad):
+        object_V = self.V_list[object_idx].clone().cpu().numpy()
+        boundary_V = self.V_list[boundary_idx].clone().cpu().numpy()
+
+        kd_tree = KDTree(boundary_V, leaf_size=10, metric='euclidean')
+
+        boundary_offset = 0
+        object_offset = 0
+
+        for i in range(boundary_idx):
+            boundary_offset += len(self.V_list[i])
+        for i in range(object_idx):
+            object_offset += len(self.V_list[i])
+
+        boundary_list = []
+        boundary_init_d = []
+        for i in range(object_V.shape[0]):
+            group_idx = kd_tree.query_radius(object_V[i].reshape(1, 3), r=rad)
+            group_idx = group_idx[0]
+            for j in group_idx:
+                boundary_list.append([i + object_offset, j])
+                boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
+
+        boundary_list = np.array(boundary_list)
+        boundary_init_d = np.array(boundary_init_d).reshape(len(boundary_init_d), 1)
+        self.C_boundary_list.append(torch.from_numpy(boundary_list))
+        self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d))

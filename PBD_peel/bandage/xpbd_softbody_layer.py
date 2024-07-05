@@ -382,7 +382,8 @@ class project_C_spring_boundary(torch.nn.Module):
         # normalized difference vectors
         N_norm = N / (D+1e-8)
         # average compliance
-        A = self.V_compliance[self.C_dist[:, 0]]
+        # A = self.V_compliance[self.C_dist[:, 0]]
+        A = self.V_compliance
             
         # weighted inverse mass
         S = self.V_w[self.C_dist[:, 0]] + self.V_w[self.C_dist[:, 1]]
@@ -595,17 +596,22 @@ def get_energy_boundary(softbody: XPBDSoftbody,
     V_boundary_stiffness_threshold = V_boundary_stiffness.clone()
     V_boundary_stiffness_threshold[V_boundary_stiffness_threshold < 1e-3] = 0
 
-    dist_C, dist_C_stiffness = __get_spring_boundary_constraints(softbody,
+    # dist_C, dist_C_stiffness = __get_spring_boundary_constraints(softbody,
+    #                                                   V_predict,
+    #                                                   V_boundary_stiffness_threshold,
+    #                                                   mask)
+    dist_C = __get_spring_boundary_constraints(softbody,
                                                       V_predict,
                                                       V_boundary_stiffness_threshold,
                                                       mask)
     # energy is C^2 * stiffness / 2
+    dist_C_stiffness = V_boundary_stiffness_threshold
     boundary_energy = torch.square(dist_C) * dist_C_stiffness / 2
-    return torch.mean(boundary_energy)
+    return boundary_energy
 
 def __get_spring_boundary_constraints(softbody, V_predict, V_boundary_stiffness, mask=None):
     C = []
-    C_stiffness = []
+    # C_stiffness = []
     # collect all distance constraints
     for C_dist, C_init_d in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list):
         if mask == None or (C_dist[:, 0] in mask and C_dist[:, 1] in mask):
@@ -616,5 +622,5 @@ def __get_spring_boundary_constraints(softbody, V_predict, V_boundary_stiffness,
             # constarint values
             C.append(D - C_init_d)
             # average stiffness
-            C_stiffness.append(V_boundary_stiffness[C_dist[:, 0]])
-    return torch.cat(C), torch.cat(C_stiffness)
+            # C_stiffness.append(V_boundary_stiffness[C_dist[:, 0]])
+    return torch.cat(C)#, torch.cat(C_stiffness)

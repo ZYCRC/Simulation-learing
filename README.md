@@ -48,4 +48,7 @@ Use the boundary as the optimize goal, but I think due to sigmod function, the b
 ![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_based_optimize_tilted2.gif)  
 The result of boundary and energy optimize is not very good.
 ![](https://github.com/ZYCRC/Simulation-learing/blob/main/PBD_peel/boundary_energy_based_optimize.gif)  
-Primary guess is that it will show a not moving in the start and suddenly active in the later part of simulation. Since the energy we account is sum of per iteration, since the inactive iteration is more and the breaking condition is fixed, the total energy will reduce.
+Primary guess is that it will show a not moving in the start and suddenly active in the later part of simulation. Since the energy we account is sum of per iteration, since the inactive iteration is more and the breaking condition is fixed, the total energy will reduce.  
+July 5th  
+Add peeling bandage on a deformable object demo. Bandage (distance constrain, shape constrain and boundary constrain), deformable object (distance constrain, boundary constrain).
+![](PBD_peel/bandage/skin_bandage.gif)  

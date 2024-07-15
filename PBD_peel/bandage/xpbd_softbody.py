@@ -569,8 +569,11 @@ class XPBDSoftbody:
         grid = ndimage.gaussian_filter(grid, sigma=(7, 7, 0), order=0)
         self.contact_field = torch.from_numpy(grid).squeeze().float().to(cfg.device)
         
-    def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad):
-        object_V = self.V_list[object_idx].clone().cpu().numpy()
+    def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad, object_select_idx=-1):
+        if object_select_idx == -1:
+            object_V = self.V_list[object_idx].clone().cpu().numpy()
+        else:
+            object_V = self.V_list[object_idx][object_select_idx].clone().cpu().numpy()
         boundary_V = self.V_list[boundary_idx].clone().cpu().numpy()
 
         kd_tree = KDTree(boundary_V, leaf_size=10, metric='euclidean')
@@ -588,9 +591,14 @@ class XPBDSoftbody:
         for i in range(object_V.shape[0]):
             group_idx = kd_tree.query_radius(object_V[i].reshape(1, 3), r=rad)
             group_idx = group_idx[0]
-            for j in group_idx:
-                boundary_list.append([i + object_offset, j])
-                boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
+            if len(group_idx) != 0:
+                for j in group_idx:
+                    if object_select_idx == -1:
+                        boundary_list.append([i + object_offset, j])
+                        boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
+                    else:
+                        boundary_list.append([object_select_idx[i] + object_offset, j])
+                        boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
 
         boundary_list = np.array(boundary_list)
         boundary_init_d = np.array(boundary_init_d).reshape(len(boundary_init_d), 1)

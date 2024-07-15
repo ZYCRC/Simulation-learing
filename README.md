@@ -52,3 +52,5 @@ Primary guess is that it will show a not moving in the start and suddenly active
 July 5th  
 Add peeling bandage on a deformable object demo. Bandage (distance constrain, shape constrain and boundary constrain), deformable object (distance constrain, boundary constrain).
 ![](PBD_peel/bandage/skin_bandage.gif)  
+Add 2 deformable tissue who are connected and perform a peeling demo.
+![](PBD_peel/bandage/tissue2tissue.gif)  

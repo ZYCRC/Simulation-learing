@@ -135,6 +135,7 @@ with torch.no_grad():
         mesh.points = softbody.V.cpu().numpy()[:600]
         mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
         pl.show(interactive_update=True)
-        print(np.sum(color))
+        # print(np.sum(color))
         pl.write_frame()
 pl.close()
+print(step_ref.project_list)

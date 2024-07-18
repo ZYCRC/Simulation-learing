@@ -50,12 +50,12 @@ class XPBDStep(torch.nn.Module):
         self.using_functorch = using_functorch
 
         # distance constraints
-        # V_dist_compliance = 1 / (V_dist_stiffness * (dt / substep)**2)
-        # for C_dist, C_init_d in zip(softbody.C_dist_list, softbody.C_init_d_list):
-        #     self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
-        #     self.project_list.append(project_C_dist(
-        #         softbody.V_w, V_dist_compliance, C_dist, C_init_d
-        #     ))
+        V_dist_compliance = 1 / (V_dist_stiffness * (dt / substep)**2)
+        for C_dist, C_init_d in zip(softbody.C_dist_list, softbody.C_init_d_list):
+            self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
+            self.project_list.append(project_C_dist(
+                softbody.V_w, V_dist_compliance, C_dist, C_init_d
+            ))
 
         # shape matching constraints
         if use_shape_matching:

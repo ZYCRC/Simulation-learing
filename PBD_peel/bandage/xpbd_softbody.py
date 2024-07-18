@@ -152,34 +152,34 @@ class XPBDSoftbody:
         self.init_x_min, self.init_x_max, self.init_y_min, self.init_y_max = self.V[:, 0].min(), self.V[:, 0].max(), self.V[:, 1].min(), self.V[:, 1].max()
 
     # simple version
-    # def init_spring_boundary(self):
-    #     '''
-    #     simply double all the data structure
-    #     '''
-    #     assert(self.init == True)
-    #     self.V = torch.cat([self.V, self.V], 0)
-    #     self.V_velocity = torch.cat([self.V_velocity, self.V_velocity], 0)
-    #     self.V_force = torch.cat([self.V_force, self.V_force], 0)
-    #     self.V_mass = torch.cat([self.V_mass, self.V_mass], 0)
-    #     self.V_w = torch.cat([self.V_w, self.V_w], 0)
+    def init_spring_boundary(self):
+        '''
+        simply double all the data structure
+        '''
+        assert(self.init == True)
+        self.V = torch.cat([self.V, self.V], 0)
+        self.V_velocity = torch.cat([self.V_velocity, self.V_velocity], 0)
+        self.V_force = torch.cat([self.V_force, self.V_force], 0)
+        self.V_mass = torch.cat([self.V_mass, self.V_mass], 0)
+        self.V_w = torch.cat([self.V_w, self.V_w], 0)
 
     # function for add virtual vertex
     # def add_vitrual_vertex(self, virtual_V, vitrual_V_mass):
     #     self.virtual_V.append(virtual_V)
     #     self.virtual_V_mass.append(vitrual_V_mass)
 
-    # new version
-    def init_spring_boundary(self, N_vitrual):
-        '''
-        simply double all the data structure
-        '''
-        assert(self.init == True)
-        self.V = torch.cat([self.V, self.V[:N_vitrual]], 0)
-        self.V_velocity = torch.cat([self.V_velocity, self.V_velocity[:N_vitrual]], 0)
-        self.V_force = torch.cat([self.V_force, self.V_force[:N_vitrual]], 0)
-        self.V_mass = torch.cat([self.V_mass, self.V_mass[:N_vitrual]], 0)
-        self.V_mass_no_inf = self.V_mass.clone()
-        self.V_w = torch.cat([self.V_w, self.V_w[:N_vitrual]], 0)
+    # # new version
+    # def init_spring_boundary(self, N_vitrual):
+    #     '''
+    #     simply double all the data structure
+    #     '''
+    #     assert(self.init == True)
+    #     self.V = torch.cat([self.V, self.V[:N_vitrual]], 0)
+    #     self.V_velocity = torch.cat([self.V_velocity, self.V_velocity[:N_vitrual]], 0)
+    #     self.V_force = torch.cat([self.V_force, self.V_force[:N_vitrual]], 0)
+    #     self.V_mass = torch.cat([self.V_mass, self.V_mass[:N_vitrual]], 0)
+    #     self.V_mass_no_inf = self.V_mass.clone()
+    #     self.V_w = torch.cat([self.V_w, self.V_w[:N_vitrual]], 0)
 
     def double_area(self, target_V_list: torch.tensor):
         assert(self.init == True)
@@ -207,18 +207,19 @@ class XPBDSoftbody:
         assert(self.init == True)
         self.point_fixed = True
         self.V_mass[self.offset_list[idx] + point_idx] = torch.inf
+        # self.V_mass[self.offset_list[idx] + point_idx] = 1000
         self.V_w = 1 / self.V_mass
 
-    # def fix_virtual_boundary(self) -> None:
-    #     assert(self.init == True)
-    #     N = self.V.shape[0] // 2
-    #     self.V_mass[N:] = torch.inf
-    #     self.V_w = 1 / self.V_mass
-
-    def fix_virtual_boundary(self, N_virtual) -> None:
+    def fix_virtual_boundary(self) -> None:
         assert(self.init == True)
-        self.V_mass[-N_virtual:] = torch.inf
+        N = self.V.shape[0] // 2
+        self.V_mass[N:] = torch.inf
         self.V_w = 1 / self.V_mass
+
+    # def fix_virtual_boundary(self, N_virtual) -> None:
+    #     assert(self.init == True)
+    #     self.V_mass[-N_virtual:] = torch.inf
+    #     self.V_w = 1 / self.V_mass
 
     def fix_larger_than(self, idx: int, value: float, axis: int) -> None:
         '''
@@ -309,17 +310,17 @@ class XPBDSoftbody:
             if torch.norm(self.V_list[idx][i] - point) < threshold:
                 return i
 
-    # def init_boundary_constraints(self) -> None:
-    #     assert(self.init == True)
-    #     N = self.V.shape[0] // 2 # N is the number of real particles
-    #     self.C_boundary_list = [torch.stack([torch.tensor([i, i+N]).long().to(cfg.device) for i in range(N)])]
-    #     self.C_init_boundary_d_list = [torch.zeros(N, 1).to(cfg.device)]
-
-    def init_boundary_constraints(self, N_vitrual, N_start) -> None:
+    def init_boundary_constraints(self) -> None:
         assert(self.init == True)
-        N = N_vitrual # N is the number of real particles
-        self.C_boundary_list = [torch.stack([torch.tensor([i, i+N_start]).long().to(cfg.device) for i in range(N)])]
+        N = self.V.shape[0] // 2 # N is the number of real particles
+        self.C_boundary_list = [torch.stack([torch.tensor([i, i+N]).long().to(cfg.device) for i in range(N)])]
         self.C_init_boundary_d_list = [torch.zeros(N, 1).to(cfg.device)]
+
+    # def init_boundary_constraints(self, N_vitrual, N_start) -> None:
+    #     assert(self.init == True)
+    #     N = N_vitrual # N is the number of real particles
+    #     self.C_boundary_list = [torch.stack([torch.tensor([i, i+N_start]).long().to(cfg.device) for i in range(N)])]
+    #     self.C_init_boundary_d_list = [torch.zeros(N, 1).to(cfg.device)]
 
     def add_boundary_constraints(self, object_V_list, boundar_V_list) -> None:
         assert(self.init == True)

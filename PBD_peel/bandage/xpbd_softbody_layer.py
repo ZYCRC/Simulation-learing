@@ -333,23 +333,16 @@ class project_C_dist(torch.nn.Module):
         S[S == 0] = torch.inf
         # delta lagrange
         L_delta = (-C - A * L) / (S + A)
-        # print(L_delta.shape)
-        # print(C.shape)
-        # print(A.shape)
-        # print(L.shape)
-        # print(S.shape)
         
         # new lagrange
         L_new = L + L_delta
         # new V_predict
         V_predict_new = V_predict.clone()
         # update for 0 vertex in constraint
-        # print(N_norm.shape)
-        # print(self.V_w[self.C_dist[:, 0]].shape)
-        # print(L_delta.shape)
         V_predict_new[self.C_dist[:, 0]
                       ] += self.V_w[self.C_dist[:, 0]] * L_delta * N_norm
         # update for 1 vertex in constraint
+        # print(True in torch.isnan(self.V_w[self.C_dist[:, 1]]), True in torch.isnan(L_delta), True in torch.isnan(N_norm))
         V_predict_new[self.C_dist[:, 1]
                       ] -= self.V_w[self.C_dist[:, 1]] * L_delta * N_norm
 
@@ -380,9 +373,10 @@ class project_C_spring_boundary(torch.nn.Module):
         # constarint values
         C = D - self.C_init_d
         # normalized difference vectors
-        N_norm = N / (D+1e-8)
+        N_norm = N / (D+1e-6)
         # average compliance
         # A = self.V_compliance[self.C_dist[:, 0]]
+        # A = torch.ones_like(self.V_compliance).to(cfg.device)
         A = self.V_compliance
             
         # weighted inverse mass
@@ -594,19 +588,21 @@ def get_energy_boundary(softbody: XPBDSoftbody,
                          mask: set = None) -> torch.Tensor:
     
     V_boundary_stiffness_threshold = V_boundary_stiffness.clone()
-    V_boundary_stiffness_threshold[V_boundary_stiffness_threshold < 1e-3] = 0
-
+    # V_boundary_stiffness_threshold[V_boundary_stiffness_threshold < 1e-3] = 0
+    V_boundary_stiffness_threshold = V_boundary_stiffness_threshold * torch.sigmoid(1e5 * (V_boundary_stiffness_threshold - 1e-3))
     # dist_C, dist_C_stiffness = __get_spring_boundary_constraints(softbody,
     #                                                   V_predict,
     #                                                   V_boundary_stiffness_threshold,
     #                                                   mask)
+    # Since this version for the boundary constrain, it is stiffness - constrain not stiffness - vertex
+    # The stiffness can simply grap from the input
     dist_C = __get_spring_boundary_constraints(softbody,
                                                       V_predict,
                                                       V_boundary_stiffness_threshold,
                                                       mask)
     # energy is C^2 * stiffness / 2
-    dist_C_stiffness = V_boundary_stiffness_threshold
-    boundary_energy = torch.square(dist_C) * dist_C_stiffness / 2
+    # dist_C_stiffness = V_boundary_stiffness_threshold.clone()
+    boundary_energy = torch.square(dist_C) * V_boundary_stiffness_threshold / 2
     return boundary_energy
 
 def __get_spring_boundary_constraints(softbody, V_predict, V_boundary_stiffness, mask=None):

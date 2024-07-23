@@ -74,6 +74,7 @@ class XPBDStep(torch.nn.Module):
             V_boundary_compliance = 1 / (V_boundary_stiffness * (dt / substep)**2)
             for C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1 in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_lut_0, softbody.C_boundary_lut_1, softbody.C_boundary_V_0, softbody.C_boundary_V_1):
                 # print(torch.zeros_like(C_init_d).shape)
+                
                 self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
                 # self.L_list.append(torch.zeros_like(C_lut[:, 1]).to(cfg.device))
                 self.project_list.append(project_C_spring_boundary(

@@ -633,4 +633,6 @@ class XPBDSoftbody:
         self.C_boundary_lut_1.append(boundary_lut_1)
         if object_select_idx == -1:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0]))
+        else:
+            self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)))
         self.C_boundary_V_1.append(torch.from_numpy(np.array(boundary_select)))

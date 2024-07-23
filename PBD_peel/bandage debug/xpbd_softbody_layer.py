@@ -72,11 +72,12 @@ class XPBDStep(torch.nn.Module):
         if use_spring_boundary:
             self.V_boundary_stiffness = V_boundary_stiffness
             V_boundary_compliance = 1 / (V_boundary_stiffness * (dt / substep)**2)
-            for C_dist, C_init_d in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list):
+            for C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1 in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_lut_0, softbody.C_boundary_lut_1, softbody.C_boundary_V_0, softbody.C_boundary_V_1):
                 # print(torch.zeros_like(C_init_d).shape)
                 self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
+                # self.L_list.append(torch.zeros_like(C_lut[:, 1]).to(cfg.device))
                 self.project_list.append(project_C_spring_boundary(
-                    softbody.V_w, V_boundary_compliance, C_dist, C_init_d
+                    softbody.V_w, V_boundary_compliance, C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1
                 ))
 
         # grasp_constraints
@@ -339,6 +340,7 @@ class project_C_dist(torch.nn.Module):
         # new V_predict
         V_predict_new = V_predict.clone()
         # update for 0 vertex in constraint
+        # print(self.V_w[self.C_dist[:, 0]].shape, L_delta.shape, N_norm.shape, self.C_dist[:, 0].shape)
         V_predict_new[self.C_dist[:, 0]
                       ] += self.V_w[self.C_dist[:, 0]] * L_delta * N_norm
         # update for 1 vertex in constraint
@@ -348,18 +350,79 @@ class project_C_dist(torch.nn.Module):
 
         return V_predict_new, L_new
 
+## old
+# class project_C_spring_boundary(torch.nn.Module):
+#     def __init__(self,
+#                  V_w: torch.Tensor,
+#                  V_compliance: torch.Tensor,
+#                  C_dist: torch.Tensor,
+#                  C_init_d: torch.Tensor,
+#                  C_lut: torch.Tensor) -> None:
+#         super(project_C_spring_boundary, self).__init__()
+#         self.V_w = V_w.detach().clone()
+#         # to optimize stiffness passed in, remove detach()add_thinshell
+#         self.V_compliance = V_compliance.detach().clone()
+#         self.C_dist = C_dist.detach().clone()
+#         self.C_init_d = C_init_d.detach().clone()
+
+#     def forward(self,
+#                 V_predict: torch.Tensor,
+#                 L: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+#         # position difference vectors
+#         N = V_predict[self.C_dist[:, 0]] - V_predict[self.C_dist[:, 1]]
+#         # print('self.C_dist[:, 0]', self.C_dist[:, 0])
+#         # print("self.C_dist[:, 1]", self.C_dist[:, 1])
+#         # distance
+#         D = torch.norm(N, p=2, dim=1, keepdim=True)
+#         # constarint values
+#         C = D - self.C_init_d
+#         # normalized difference vectors
+#         N_norm = N / (D+1e-6)
+#         # average compliance
+#         # A = self.V_compliance[self.C_dist[:, 0]]
+#         # A = torch.ones_like(self.V_compliance).to(cfg.device)
+#         A = self.V_compliance
+            
+#         # weighted inverse mass
+#         S = self.V_w[self.C_dist[:, 0]] + self.V_w[self.C_dist[:, 1]]
+#         S[S == 0] = torch.inf
+#         # delta lagrange
+#         L_delta = (-C - A * L) / (S + A)
+#         # new lagrange
+#         L_new = L + L_delta
+#         # new V_predict
+#         V_predict_new = V_predict.clone()
+#         # print(self.C_init_d.shape)
+#         # update for 0 vertex in constraint
+#         V_predict_new[self.C_dist[:, 0]
+#                       ] += self.V_w[self.C_dist[:, 0]] * L_delta * N_norm
+#         # update for 1 vertex in constraint
+#         V_predict_new[self.C_dist[:, 1]
+#                       ] -= self.V_w[self.C_dist[:, 1]] * L_delta * N_norm
+
+#         return V_predict_new, L_new
+
 class project_C_spring_boundary(torch.nn.Module):
     def __init__(self,
                  V_w: torch.Tensor,
                  V_compliance: torch.Tensor,
                  C_dist: torch.Tensor,
-                 C_init_d: torch.Tensor) -> None:
+                 C_init_d: torch.Tensor,
+                 C_lut_0: list,
+                 C_lut_1: list,
+                 C_V_0: torch.tensor,
+                 C_V_1: torch.tensor) -> None:
         super(project_C_spring_boundary, self).__init__()
         self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()add_thinshell
         self.V_compliance = V_compliance.detach().clone()
         self.C_dist = C_dist.detach().clone()
         self.C_init_d = C_init_d.detach().clone()
+        self.C_lut_0 = C_lut_0.copy()
+        self.C_lut_1 = C_lut_1.copy()
+        self.C_V_0 = C_V_0.detach().clone()
+        self.C_V_1 = C_V_1.detach().clone()
+
 
     def forward(self,
                 V_predict: torch.Tensor,
@@ -390,11 +453,21 @@ class project_C_spring_boundary(torch.nn.Module):
         V_predict_new = V_predict.clone()
         # print(self.C_init_d.shape)
         # update for 0 vertex in constraint
-        V_predict_new[self.C_dist[:, 0]
-                      ] += self.V_w[self.C_dist[:, 0]] * L_delta * N_norm
+        L_0 = torch.zeros((self.C_V_0.shape[0], 3))
+        for i in range(len(self.C_lut_0)):
+            L_0[i] = torch.mean(L_delta[self.C_lut_0[i]] * N_norm[self.C_lut_0[i]], 0)
+
+        L_1 = torch.zeros((self.C_V_1.shape[0], 3))
+        for i in range(len(self.C_lut_1)):
+            L_1[i] = torch.mean(L_delta[self.C_lut_1[i]] * N_norm[self.C_lut_1[i]], 0)
+
+        # print(self.V_w[self.C_V_0].shape, L_0.shape)
+        
+        V_predict_new[self.C_V_0
+                      ] += self.V_w[self.C_V_0] * L_0
         # update for 1 vertex in constraint
-        V_predict_new[self.C_dist[:, 1]
-                      ] -= self.V_w[self.C_dist[:, 1]] * L_delta * N_norm
+        V_predict_new[self.C_V_1
+                      ] -= self.V_w[self.C_V_1] * L_1
 
         return V_predict_new, L_new
 

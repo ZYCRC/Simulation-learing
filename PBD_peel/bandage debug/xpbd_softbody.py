@@ -47,6 +47,10 @@ class XPBDSoftbody:
         # virtual spring boundary constraint
         self.C_boundary_list = []
         self.C_init_boundary_d_list = []
+        self.C_boundary_lut_0 = []
+        self.C_boundary_lut_1 = []
+        self.C_boundary_V_0 = []
+        self.C_boundary_V_1 = []
         # rigid shape
         self.rigid_group = []
         # vitrual boundary
@@ -587,12 +591,21 @@ class XPBDSoftbody:
         for i in range(object_idx):
             object_offset += len(self.V_list[i])
 
+        boundary_select = []
+
+        boundary_lut_0 = []
+        boundary_lut_1 = []
         boundary_list = []
         boundary_init_d = []
         for i in range(object_V.shape[0]):
             group_idx = kd_tree.query_radius(object_V[i].reshape(1, 3), r=rad)
             group_idx = group_idx[0]
             if len(group_idx) != 0:
+                if object_select_idx == -1:
+                    boundary_lut_0.append(torch.arange(len(boundary_list), len(boundary_list) + len(group_idx)))
+                else:
+                    boundary_lut_0.append(torch.arange(len(boundary_list), len(boundary_list) + len(group_idx)))
+
                 for j in group_idx:
                     if object_select_idx == -1:
                         boundary_list.append([i + object_offset, j])
@@ -601,7 +614,23 @@ class XPBDSoftbody:
                         boundary_list.append([object_select_idx[i] + object_offset, j])
                         boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
 
+                    if j not in boundary_select:
+                        boundary_select.append(j)
+
         boundary_list = np.array(boundary_list)
         boundary_init_d = np.array(boundary_init_d).reshape(len(boundary_init_d), 1)
+
         self.C_boundary_list.append(torch.from_numpy(boundary_list))
         self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d))
+
+        boundary_list = torch.from_numpy(boundary_list)
+
+        for i in boundary_select:
+            list_idx = torch.where(boundary_list[:, 1] == i)[0]
+            boundary_lut_1.append(list_idx)
+
+        self.C_boundary_lut_0.append(boundary_lut_0)
+        self.C_boundary_lut_1.append(boundary_lut_1)
+        if object_select_idx == -1:
+            self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0]))
+        self.C_boundary_V_1.append(torch.from_numpy(np.array(boundary_select)))

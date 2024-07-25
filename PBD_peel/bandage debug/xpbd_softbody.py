@@ -620,10 +620,10 @@ class XPBDSoftbody:
         boundary_list = np.array(boundary_list)
         boundary_init_d = np.array(boundary_init_d).reshape(len(boundary_init_d), 1)
 
-        self.C_boundary_list.append(torch.from_numpy(boundary_list))
-        self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d))
+        self.C_boundary_list.append(torch.from_numpy(boundary_list).to(cfg.device))
+        self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d).to(cfg.device))
 
-        boundary_list = torch.from_numpy(boundary_list)
+        boundary_list = torch.from_numpy(boundary_list).to(cfg.device)
 
         for i in boundary_select:
             list_idx = torch.where(boundary_list[:, 1] == i)[0]
@@ -634,5 +634,5 @@ class XPBDSoftbody:
         if object_select_idx[0] == -1:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0]))
         else:
-            self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)))
-        self.C_boundary_V_1.append(torch.from_numpy(np.array(boundary_select)))
+            self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)).to(cfg.device))
+        self.C_boundary_V_1.append(torch.from_numpy(np.array(boundary_select)).to(cfg.device))

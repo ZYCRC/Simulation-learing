@@ -455,11 +455,11 @@ class project_C_spring_boundary(torch.nn.Module):
         V_predict_new = V_predict.clone()
         # print(self.C_init_d.shape)
         # update for 0 vertex in constraint
-        L_0 = torch.zeros((self.C_V_0.shape[0], 3))
+        L_0 = torch.zeros((self.C_V_0.shape[0], 3)).to(cfg.device)
         for i in range(len(self.C_lut_0)):
             L_0[i] = torch.mean(L_delta[self.C_lut_0[i]] * N_norm[self.C_lut_0[i]], 0)
 
-        L_1 = torch.zeros((self.C_V_1.shape[0], 3))
+        L_1 = torch.zeros((self.C_V_1.shape[0], 3)).to(cfg.device)
         for i in range(len(self.C_lut_1)):
             L_1[i] = torch.mean(L_delta[self.C_lut_1[i]] * N_norm[self.C_lut_1[i]], 0)
 

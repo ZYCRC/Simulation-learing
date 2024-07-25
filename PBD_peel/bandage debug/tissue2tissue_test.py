@@ -11,7 +11,6 @@ from xpbd_softbody_layer import get_energy_boundary
 from scipy.interpolate import interp1d
 from cubic_bezier import *
 from tqdm import trange
-from torchviz import make_dot
 
 # %%
 N_skin = 400

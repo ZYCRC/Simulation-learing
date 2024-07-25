@@ -416,7 +416,8 @@ class project_C_spring_boundary(torch.nn.Module):
         super(project_C_spring_boundary, self).__init__()
         self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()add_thinshell
-        self.V_compliance = V_compliance.detach().clone()
+        # self.V_compliance = V_compliance.detach().clone()
+        self.V_compliance = V_compliance.clone()
         self.C_dist = C_dist.detach().clone()
         self.C_init_d = C_init_d.detach().clone()
         self.C_lut_0 = C_lut_0.copy()

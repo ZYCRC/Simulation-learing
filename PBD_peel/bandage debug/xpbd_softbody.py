@@ -575,7 +575,7 @@ class XPBDSoftbody:
         self.contact_field = torch.from_numpy(grid).squeeze().float().to(cfg.device)
         
     def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad, object_select_idx=-1):
-        if object_select_idx == -1:
+        if object_select_idx[0] == -1:
             object_V = self.V_list[object_idx].clone().cpu().numpy()
         else:
             object_V = self.V_list[object_idx][object_select_idx].clone().cpu().numpy()
@@ -601,13 +601,13 @@ class XPBDSoftbody:
             group_idx = kd_tree.query_radius(object_V[i].reshape(1, 3), r=rad)
             group_idx = group_idx[0]
             if len(group_idx) != 0:
-                if object_select_idx == -1:
+                if object_select_idx[0] == -1:
                     boundary_lut_0.append(torch.arange(len(boundary_list), len(boundary_list) + len(group_idx)))
                 else:
                     boundary_lut_0.append(torch.arange(len(boundary_list), len(boundary_list) + len(group_idx)))
 
                 for j in group_idx:
-                    if object_select_idx == -1:
+                    if object_select_idx[0] == -1:
                         boundary_list.append([i + object_offset, j])
                         boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
                     else:
@@ -631,7 +631,7 @@ class XPBDSoftbody:
 
         self.C_boundary_lut_0.append(boundary_lut_0)
         self.C_boundary_lut_1.append(boundary_lut_1)
-        if object_select_idx == -1:
+        if object_select_idx[0] == -1:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0]))
         else:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)))

@@ -51,6 +51,7 @@ class XPBDSoftbody:
         self.C_boundary_lut_1 = []
         self.C_boundary_V_0 = []
         self.C_boundary_V_1 = []
+        self.C_boundary_mtx = []
         # rigid shape
         self.rigid_group = []
         # vitrual boundary
@@ -633,6 +634,20 @@ class XPBDSoftbody:
         self.C_boundary_lut_1.append(boundary_lut_1)
         if object_select_idx[0] == -1:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0]))
+            boundary_V_0 = self.offset_list[object_idx] + torch.arange(self.V_list[object_idx].shape[0])
+
         else:
             self.C_boundary_V_0.append(self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)).to(cfg.device))
+            boundary_V_0 = self.offset_list[object_idx] + torch.from_numpy(np.array(object_select_idx)).to(cfg.device)
         self.C_boundary_V_1.append(torch.from_numpy(np.array(boundary_select)).to(cfg.device))
+        boundary_V_1 = torch.from_numpy(np.array(boundary_select)).to(cfg.device)
+
+        boundary_mtx = torch.zeros((boundary_list.shape[0], self.V.shape[0])).to(cfg.device)
+        
+        for i in range(boundary_V_0.shape[0]):
+            boundary_mtx[boundary_lut_0[i], boundary_V_0[i]] = 1 / boundary_lut_0[i].shape[0]
+
+        for i in range(boundary_V_1.shape[0]):
+            boundary_mtx[boundary_lut_1[i], boundary_V_1[i]] = 1 / boundary_lut_1[i].shape[0]
+
+        self.C_boundary_mtx.append(boundary_mtx.type(torch.DoubleTensor) )

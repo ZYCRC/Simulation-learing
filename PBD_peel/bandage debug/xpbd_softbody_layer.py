@@ -72,14 +72,24 @@ class XPBDStep(torch.nn.Module):
         if use_spring_boundary:
             self.V_boundary_stiffness = V_boundary_stiffness
             V_boundary_compliance = 1 / (V_boundary_stiffness * (dt / substep)**2)
-            for C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1 in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_lut_0, softbody.C_boundary_lut_1, softbody.C_boundary_V_0, softbody.C_boundary_V_1):
+            # for C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1 in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_lut_0, softbody.C_boundary_lut_1, softbody.C_boundary_V_0, softbody.C_boundary_V_1):
+            #     # print(torch.zeros_like(C_init_d).shape)
+                
+            #     self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
+            #     # self.L_list.append(torch.zeros_like(C_lut[:, 1]).to(cfg.device))
+            #     self.project_list.append(project_C_spring_boundary(
+            #         softbody.V_w, V_boundary_compliance, C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1
+            #     ))
+
+            for C_dist, C_init_d, C_mtx in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_mtx):
                 # print(torch.zeros_like(C_init_d).shape)
                 
                 self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
                 # self.L_list.append(torch.zeros_like(C_lut[:, 1]).to(cfg.device))
                 self.project_list.append(project_C_spring_boundary(
-                    softbody.V_w, V_boundary_compliance, C_dist, C_init_d, C_lut_0, C_lut_1, C_V_0, C_V_1
+                    softbody.V_w, V_boundary_compliance, C_dist, C_init_d, C_mtx
                 ))
+
 
         # grasp_constraints
         if hasattr(self.softbody, 'grasp_point'):
@@ -409,10 +419,11 @@ class project_C_spring_boundary(torch.nn.Module):
                  V_compliance: torch.Tensor,
                  C_dist: torch.Tensor,
                  C_init_d: torch.Tensor,
-                 C_lut_0: list,
-                 C_lut_1: list,
-                 C_V_0: torch.tensor,
-                 C_V_1: torch.tensor) -> None:
+                 C_mtx: torch.tensor) -> None:
+                #  C_lut_0: list,
+                #  C_lut_1: list,
+                #  C_V_0: torch.tensor,
+                #  C_V_1: torch.tensor) -> None:
         super(project_C_spring_boundary, self).__init__()
         self.V_w = V_w.detach().clone()
         # to optimize stiffness passed in, remove detach()add_thinshell
@@ -420,10 +431,11 @@ class project_C_spring_boundary(torch.nn.Module):
         self.V_compliance = V_compliance.clone()
         self.C_dist = C_dist.detach().clone()
         self.C_init_d = C_init_d.detach().clone()
-        self.C_lut_0 = C_lut_0.copy()
-        self.C_lut_1 = C_lut_1.copy()
-        self.C_V_0 = C_V_0.detach().clone()
-        self.C_V_1 = C_V_1.detach().clone()
+        self.C_mtx = C_mtx.detach().clone()
+        # self.C_lut_0 = C_lut_0.copy()
+        # self.C_lut_1 = C_lut_1.copy()
+        # self.C_V_0 = C_V_0.detach().clone()
+        # self.C_V_1 = C_V_1.detach().clone()
 
 
     def forward(self,
@@ -455,21 +467,30 @@ class project_C_spring_boundary(torch.nn.Module):
         V_predict_new = V_predict.clone()
         # print(self.C_init_d.shape)
         # update for 0 vertex in constraint
-        L_0 = torch.zeros((self.C_V_0.shape[0], 3)).to(cfg.device)
-        for i in range(len(self.C_lut_0)):
-            L_0[i] = torch.mean(L_delta[self.C_lut_0[i]] * N_norm[self.C_lut_0[i]], 0)
+        # L_0 = torch.zeros((self.C_V_0.shape[0], 3)).to(cfg.device)
+        # for i in range(len(self.C_lut_0)):
+        #     L_0[i] = torch.mean(L_delta[self.C_lut_0[i]] * N_norm[self.C_lut_0[i]], 0)
 
-        L_1 = torch.zeros((self.C_V_1.shape[0], 3)).to(cfg.device)
-        for i in range(len(self.C_lut_1)):
-            L_1[i] = torch.mean(L_delta[self.C_lut_1[i]] * N_norm[self.C_lut_1[i]], 0)
+        # L_1 = torch.zeros((self.C_V_1.shape[0], 3)).to(cfg.device)
+        # for i in range(len(self.C_lut_1)):
+        #     L_1[i] = torch.mean(L_delta[self.C_lut_1[i]] * N_norm[self.C_lut_1[i]], 0)
+        L_temp = torch.transpose(L_delta * N_norm, 0, 1)
+        # print(L_temp.shape)
+        L = torch.zeros((self.C_mtx.shape[1], 3))
+        L[:, 0] = L_temp[0] @ self.C_mtx
+        L[:, 1] = L_temp[1] @ self.C_mtx
+        L[:, 2] = L_temp[2] @ self.C_mtx
+        # L = torch.transpose(L, 0, 1)
+        # print(L.shape)
 
         # print(self.V_w[self.C_V_0].shape, L_0.shape)
         
-        V_predict_new[self.C_V_0
-                      ] += self.V_w[self.C_V_0] * L_0
-        # update for 1 vertex in constraint
-        V_predict_new[self.C_V_1
-                      ] -= self.V_w[self.C_V_1] * L_1
+        # V_predict_new[self.C_V_0
+        #               ] += self.V_w[self.C_V_0] * L_0
+        # # update for 1 vertex in constraint
+        # V_predict_new[self.C_V_1
+        #               ] -= self.V_w[self.C_V_1] * L_1
+        V_predict_new += self.V_w * L
 
         return V_predict_new, L_new
 

@@ -11,7 +11,7 @@ conn_bound = 0.2
 # PBD Simulation Related Parameters
 dt = 0.01
 substep = 1
-iteration = 30
+iteration = 10
 
 use_spring_boundary = True 
 use_shape_matching = False 

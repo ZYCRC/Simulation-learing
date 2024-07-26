@@ -650,4 +650,4 @@ class XPBDSoftbody:
         for i in range(boundary_V_1.shape[0]):
             boundary_mtx[boundary_lut_1[i], boundary_V_1[i]] = 1 / boundary_lut_1[i].shape[0]
 
-        self.C_boundary_mtx.append(boundary_mtx.type(torch.DoubleTensor) )
+        self.C_boundary_mtx.append(boundary_mtx.type(torch.DoubleTensor).to(cfg.device))

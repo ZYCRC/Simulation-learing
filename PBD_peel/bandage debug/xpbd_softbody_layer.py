@@ -476,7 +476,7 @@ class project_C_spring_boundary(torch.nn.Module):
         #     L_1[i] = torch.mean(L_delta[self.C_lut_1[i]] * N_norm[self.C_lut_1[i]], 0)
         L_temp = torch.transpose(L_delta * N_norm, 0, 1)
         # print(L_temp.shape)
-        L = torch.zeros((self.C_mtx.shape[1], 3))
+        L = torch.zeros((self.C_mtx.shape[1], 3)).to(cfg.device)
         L[:, 0] = L_temp[0] @ self.C_mtx
         L[:, 1] = L_temp[1] @ self.C_mtx
         L[:, 2] = L_temp[2] @ self.C_mtx

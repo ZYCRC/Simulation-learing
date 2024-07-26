@@ -1,8 +1,8 @@
 import torch
 import matplotlib as mplt
 import numpy as np
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
 
 # Stiffness related parameters 
 mesh_bound = 1e3
@@ -11,7 +11,7 @@ conn_bound = 0.2
 # PBD Simulation Related Parameters
 dt = 0.01
 substep = 1
-iteration = 30
+iteration = 10
 
 use_spring_boundary = True 
 use_shape_matching = False 

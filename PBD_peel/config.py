@@ -1,8 +1,8 @@
 import torch
 import matplotlib as mplt
 import numpy as np
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# device = torch.device("cpu")
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 # Stiffness related parameters 
 mesh_bound = 1e3

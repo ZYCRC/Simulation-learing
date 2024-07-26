@@ -131,7 +131,7 @@ with torch.no_grad():
         # print(torch.sigmoid(1e9 * (1e-8 - energy)))
         # V_boundary_stiffness[:cfg.n_surf][energy.squeeze() > 1e-8] = 1e-5
         V_boundary_stiffness[:cfg.n_surf] = V_boundary_stiffness[:cfg.n_surf] * torch.sigmoid(1e9 * (1e-8 - energy))
-        color = energy.squeeze().cpu().numpy()
+        # color = energy.squeeze().cpu().numpy()
         # pl.remove_actor(mesh_actor)
         mesh.points = softbody.V.cpu().numpy()[:600]
         # mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')

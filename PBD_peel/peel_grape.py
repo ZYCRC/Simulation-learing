@@ -11,6 +11,7 @@ from xpbd_softbody_layer import XPBDStep
 import pyvista as pv
 import matplotlib.pyplot as plt
 from xpbd_softbody import XPBDSoftbody
+from tqdm import trange
 
 mesh, softbody = data.get_xpbd_grape()
 
@@ -106,9 +107,9 @@ pl.add_mesh(grape, color='#9f5547ff', show_edges=False, lighting=False,style='su
 grape_meat= pv.read('assets/grape_skin.ply')
 grape_meat.points = grape_meat.points - np.array([0, 0, 2e-4])
 pl.add_mesh(grape_meat, color='#c0ab5eff', show_edges=False, lighting=False,style='surface')
-pl.open_gif('energy_direct.gif')
+# pl.open_gif('energy_direct.gif')
 with torch.no_grad():
-    for t in range(1, control_trajectory.shape[0]):
+    for t in trange(1, control_trajectory.shape[0]):
         softbody.grasp_point = control_trajectory[t].clone()
 
         step_ref = XPBDStep(softbody,
@@ -131,11 +132,11 @@ with torch.no_grad():
         # V_boundary_stiffness[:cfg.n_surf][energy.squeeze() > 1e-8] = 1e-5
         V_boundary_stiffness[:cfg.n_surf] = V_boundary_stiffness[:cfg.n_surf] * torch.sigmoid(1e9 * (1e-8 - energy))
         color = energy.squeeze().cpu().numpy()
-        pl.remove_actor(mesh_actor)
+        # pl.remove_actor(mesh_actor)
         mesh.points = softbody.V.cpu().numpy()[:600]
-        mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
+        # mesh_actor = pl.add_mesh(mesh, scalars=color, cmap='jet', show_edges=True, edge_color='#b37164ff',  lighting=False,style='surface')
         pl.show(interactive_update=True)
         # print(np.sum(color))
-        pl.write_frame()
-pl.close()
-print(step_ref.project_list)
+        # pl.write_frame()
+# pl.close()
+# print(step_ref.project_list)

@@ -54,3 +54,7 @@ Add peeling bandage on a deformable object demo. Bandage (distance constrain, sh
 ![](PBD_peel/bandage/skin_bandage.gif)  
 Add 2 deformable tissue who are connected and perform a peeling demo.
 ![](PBD_peel/bandage/tissue2tissue.gif)  
+
+July 25  
+Add the primary optimization result, about after about 20 iteration. And the iteration speed is much faster now.
+![](PBD_peel/bandage_debug/tissue2tissue_opt.gif)

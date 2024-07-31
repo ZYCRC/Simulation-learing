@@ -58,3 +58,12 @@ Add 2 deformable tissue who are connected and perform a peeling demo.
 July 25  
 Add the primary optimization result, about after about 20 iteration. And the iteration speed is much faster now.
 ![](PBD_peel/bandage_debug/tissue2tissue_opt.gif)
+
+July 30
+Add 3 different stiffness setup and their optimization result.  
+![](PBD_peel/bandage_setup/stiffness_scenario_1.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario1_itr80.gif)
+![](PBD_peel/bandage_setup/stiffness_scenario_2.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario2_itr87.gif)
+![](PBD_peel/bandage_setup/stiffness_scenario_3.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario3_itr40.gif)

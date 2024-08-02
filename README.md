@@ -66,4 +66,13 @@ Add 3 different stiffness setup and their optimization result.
 ![](PBD_peel/bandage_setup/stiffness_scenario_2.png)
 ![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario2_itr87.gif)
 ![](PBD_peel/bandage_setup/stiffness_scenario_3.png)
-![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario3_itr40.gif)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario3_itr40.gif)  
+
+Aug 1
+Modify the stiffness in half-stiffness case. The result shows that the optimized trajectories have some similarity. As the stiffness increase, the accuracy will drop.
+![](PBD_peel/bandage_setup/stiffness_scenario_4.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario4_itr151.gif)
+![](PBD_peel/bandage_setup/stiffness_scenario_5.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario5_itr40.gif)
+![](PBD_peel/bandage_setup/stiffness_scenario_6.png)
+![](PBD_peel/bandage_setup/tis2tis_stiffness_scenario6_itr119.gif)  

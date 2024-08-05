@@ -83,7 +83,7 @@ class XPBDStep(torch.nn.Module):
 
             for C_dist, C_init_d, C_mtx in zip(softbody.C_boundary_list, softbody.C_init_boundary_d_list, softbody.C_boundary_mtx):
                 # print(torch.zeros_like(C_init_d).shape)
-                
+                # print(C_init_d)
                 self.L_list.append(torch.zeros_like(C_init_d).to(cfg.device))
                 # self.L_list.append(torch.zeros_like(C_lut[:, 1]).to(cfg.device))
                 self.project_list.append(project_C_spring_boundary(
@@ -449,8 +449,10 @@ class project_C_spring_boundary(torch.nn.Module):
         D = torch.norm(N, p=2, dim=1, keepdim=True)
         # constarint values
         C = D - self.C_init_d
+        # print(C.max())
+        # print(N.shape)
         # normalized difference vectors
-        N_norm = N / (D+1e-6)
+        N_norm = N / D
         # average compliance
         # A = self.V_compliance[self.C_dist[:, 0]]
         # A = torch.ones_like(self.V_compliance).to(cfg.device)
@@ -461,6 +463,7 @@ class project_C_spring_boundary(torch.nn.Module):
         S[S == 0] = torch.inf
         # delta lagrange
         L_delta = (-C - A * L) / (S + A)
+        # print(torch.sum(L_delta > 1e-10))
         # new lagrange
         L_new = L + L_delta
         # new V_predict
@@ -480,6 +483,7 @@ class project_C_spring_boundary(torch.nn.Module):
         L[:, 0] = L_temp[0] @ self.C_mtx
         L[:, 1] = L_temp[1] @ self.C_mtx
         L[:, 2] = L_temp[2] @ self.C_mtx
+        # print(torch.sum(L[self.C_dist[:, 0]] > 1e-6))
         # L = torch.transpose(L, 0, 1)
         # print(L.shape)
 
@@ -491,7 +495,7 @@ class project_C_spring_boundary(torch.nn.Module):
         # V_predict_new[self.C_V_1
         #               ] -= self.V_w[self.C_V_1] * L_1
         V_predict_new += self.V_w * L
-
+        # print(L[self.C_dist[:, 0]])
         return V_predict_new, L_new
 
 

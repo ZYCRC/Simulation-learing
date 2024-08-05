@@ -575,12 +575,12 @@ class XPBDSoftbody:
         grid = ndimage.gaussian_filter(grid, sigma=(7, 7, 0), order=0)
         self.contact_field = torch.from_numpy(grid).squeeze().float().to(cfg.device)
         
-    def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad, object_select_idx=-1):
+    def add_multi_boundary_constrain(self, object_idx, boundary_idx, rad, object_select_idx, boundary_select_idx):
         if object_select_idx[0] == -1:
             object_V = self.V_list[object_idx].clone().cpu().numpy()
         else:
             object_V = self.V_list[object_idx][object_select_idx].clone().cpu().numpy()
-        boundary_V = self.V_list[boundary_idx].clone().cpu().numpy()
+        boundary_V = self.V_list[boundary_idx][boundary_select_idx].clone().cpu().numpy()
 
         kd_tree = KDTree(boundary_V, leaf_size=10, metric='euclidean')
 
@@ -609,20 +609,21 @@ class XPBDSoftbody:
 
                 for j in group_idx:
                     if object_select_idx[0] == -1:
-                        boundary_list.append([i + object_offset, j])
-                        boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
+                        boundary_list.append([i + object_offset, boundary_select_idx[j]])
+                        # boundary_init_d.append(torch.norm(torch.from_numpy(object_V[i] - boundary_V[j])))
                     else:
-                        boundary_list.append([object_select_idx[i] + object_offset, j])
-                        boundary_init_d.append(np.linalg.norm(object_V[i] - boundary_V[j]))
+                        boundary_list.append([object_select_idx[i] + object_offset, boundary_select_idx[j]])
+                        # boundary_init_d.append(torch.norm(torch.from_numpy(object_V[i] - boundary_V[j])))
 
-                    if j not in boundary_select:
-                        boundary_select.append(j)
+                    if boundary_select_idx[j] not in boundary_select:
+                        boundary_select.append(boundary_select_idx[j])
 
         boundary_list = np.array(boundary_list)
         boundary_init_d = np.array(boundary_init_d).reshape(len(boundary_init_d), 1)
 
         self.C_boundary_list.append(torch.from_numpy(boundary_list).to(cfg.device))
-        self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d).to(cfg.device))
+        # self.C_init_boundary_d_list.append(torch.from_numpy(boundary_init_d).to(cfg.device))
+        self.C_init_boundary_d_list.append(torch.norm(self.V[boundary_list[:, 0]] - self.V[boundary_list[:, 1]], dim = 1).reshape(boundary_list.shape[0], 1))
 
         boundary_list = torch.from_numpy(boundary_list).to(cfg.device)
 
@@ -643,11 +644,12 @@ class XPBDSoftbody:
         boundary_V_1 = torch.from_numpy(np.array(boundary_select)).to(cfg.device)
 
         boundary_mtx = torch.zeros((boundary_list.shape[0], self.V.shape[0])).to(cfg.device)
-        
+
         for i in range(boundary_V_0.shape[0]):
+            # print(boundary_lut_0[i], boundary_V_0[i])
             boundary_mtx[boundary_lut_0[i], boundary_V_0[i]] = 1 / boundary_lut_0[i].shape[0]
 
         for i in range(boundary_V_1.shape[0]):
             boundary_mtx[boundary_lut_1[i], boundary_V_1[i]] = 1 / boundary_lut_1[i].shape[0]
 
-        self.C_boundary_mtx.append(boundary_mtx.type(torch.DoubleTensor).to(cfg.device))
+        self.C_boundary_mtx.append(boundary_mtx.to(cfg.device))
